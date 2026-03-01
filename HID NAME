@@ -1,7 +1,7 @@
 local Players = game:GetService("Players")
 local RunService = game:GetService("RunService")
 local LocalPlayer = Players.LocalPlayer
-local NEW_NAME = "Anouar777x"
+local NEW_NAME = ""
 
 local function ReplaceMyName(text)
     return string.gsub(text, LocalPlayer.Name, NEW_NAME)
