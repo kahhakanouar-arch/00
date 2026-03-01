@@ -1,12 +1,12 @@
 local Config = {
-    ProtectedName = "???",  -- Ton nom fake (change si tu veux "Ghost" etc.)
-    OtherPlayers = true,    -- true = cache aussi les autres noms
-    OtherPlayersTemplate = "Player",  -- Autres = "Player1", "Player2"...
-    RenameTextBoxes = true, -- Cache dans les inputs aussi
-    UseMetatableHook = true -- Anti-détection max (besoin executor avancé)
+    ProtectedName = "Anouar777x",  -- TON NOUVEAU NOM ICI !
+    OtherPlayers = false,          -- false = seulement TON nom changé
+    OtherPlayersTemplate = "Player",
+    RenameTextBoxes = false,       -- Évite bugs GUI
+    UseMetatableHook = true,       -- Active pour anti-reset (désactive si bug executor)
+    UseAggressiveFiltering = false -- Pas de lag
 }
 
--- Le reste du code (copie-colle tout) :
 local ProtectedNames = {}
 local Counter = 1
 if Config.OtherPlayers then
@@ -21,6 +21,7 @@ if Config.OtherPlayers then
 end
 
 local LPName = game.Players.LocalPlayer.Name
+local IsA = game.IsA
 
 local function FilterString(S)
     local RS = S
@@ -32,29 +33,28 @@ local function FilterString(S)
     return string.gsub(RS, LPName, Config.ProtectedName)
 end
 
--- Scan initial
+-- Scan initial (nametag, leaderboard, chat...)
 for _, obj in pairs(game:GetDescendants()) do
-    if obj:IsA("TextLabel") or obj:IsA("TextButton") or (Config.RenameTextBoxes and obj:IsA("TextBox")) then
+    if obj:IsA("TextLabel") or obj:IsA("TextButton") then
         obj.Text = FilterString(obj.Text)
     end
 end
 
--- Hook pour changements
+-- Surveille nouveaux textes
 game.DescendantAdded:Connect(function(obj)
-    if obj:IsA("TextLabel") or obj:IsA("TextButton") or (Config.RenameTextBoxes and obj:IsA("TextBox")) then
+    if obj:IsA("TextLabel") or obj:IsA("TextButton") then
         obj:GetPropertyChangedSignal("Text"):Connect(function()
             obj.Text = FilterString(obj.Text)
         end)
     end
 end)
 
--- Metatable hook (anti-filter pro)
+-- Hook pro (anti-reset nametag)
 if Config.UseMetatableHook and getrawmetatable then
     local mt = getrawmetatable(game)
     local old = mt.__newindex
     local newindex = function(self, key, value)
-        if (self:IsA("TextLabel") or self:IsA("TextButton") or (Config.RenameTextBoxes and self:IsA("TextBox"))) 
-           and key == "Text" and type(value) == "string" then
+        if (self:IsA("TextLabel") or self:IsA("TextButton")) and key == "Text" and type(value) == "string" then
             return old(self, key, FilterString(value))
         end
         return old(self, key, value)
@@ -62,4 +62,4 @@ if Config.UseMetatableHook and getrawmetatable then
     mt.__newindex = newindex
 end
 
-print("anouar 3mk")
+print("ez")
