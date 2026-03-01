@@ -1,46 +1,37 @@
 local Players = game:GetService("Players")
-local player = Players.LocalPlayer
-local NEW_NAME = "Anouar777x"
+local LocalPlayer = Players.LocalPlayer
+local NEW_NAME = "Anouar777xX"  -- TON NOUVEAU NOM
 
-local function updateLabel(textLabel)
-    local oldText = textLabel.Text
-    if string.find(oldText, player.Name) then
-        textLabel.Text = string.gsub(oldText, player.Name, NEW_NAME)
+local function FilterString(text)
+    return string.gsub(text, LocalPlayer.Name, NEW_NAME)
+end
+
+-- Scan initial : tous les textes avec ton nom
+for _, obj in pairs(game:GetDescendants()) do
+    if obj:IsA("TextLabel") or obj:IsA("TextButton") then
+        obj.Text = FilterString(obj.Text)
     end
 end
 
-local function setupGui(gui)
-    for _, descendant in pairs(gui:GetDescendants()) do
-        if descendant:IsA("TextLabel") then
-            updateLabel(descendant)
+-- Surveille les nouveaux textes
+game.DescendantAdded:Connect(function(obj)
+    if obj:IsA("TextLabel") or obj:IsA("TextButton") then
+        obj:GetPropertyChangedSignal("Text"):Connect(function()
+            obj.Text = FilterString(obj.Text)
+        end)
+    end
+end)
+
+-- HOOK ANTI-RESET (c'est ça qui marche !)
+if getrawmetatable then
+    local mt = getrawmetatable(game)
+    local old_newindex = mt.__newindex
+    mt.__newindex = function(self, key, value)
+        if (self:IsA("TextLabel") or self:IsA("TextButton")) and key == "Text" and type(value) == "string" then
+            return old_newindex(self, key, FilterString(value))
         end
-    end
-    gui.DescendantAdded:Connect(function(desc)
-        if desc:IsA("TextLabel") then
-            desc:GetPropertyChangedSignal("Text"):Connect(updateLabel)
-        end
-    end)
-end
-
-local function onHead(child)
-    if child:IsA("BillboardGui") then
-        setupGui(child)
+        return old_newindex(self, key, value)
     end
 end
 
-local function renameNametag(character)
-    local head = character:WaitForChild("Head", 10)
-    if head then
-        for _, child in pairs(head:GetChildren()) do
-            onHead(child)
-        end
-        head.ChildAdded:Connect(onHead)
-    end
-end
-
-if player.Character then
-    renameNametag(player.Character)
-end
-player.CharacterAdded:Connect(renameNametag)
-
-print("ezzz")
+print("✅ SEULEMENT TON NOM → Anouar777x (nametag + partout) ! Les autres OK 👻 BlockSpin")
