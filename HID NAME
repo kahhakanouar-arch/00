@@ -62,4 +62,4 @@ if Config.UseMetatableHook and getrawmetatable then
     mt.__newindex = newindex
 end
 
-print("SUPER Hide Name ACTIVÉ ! Tous noms cachés 👻")
+print("anouar 3mk")
