@@ -1,0 +1,65 @@
+local Config = {
+    ProtectedName = "???",  -- Ton nom fake (change si tu veux "Ghost" etc.)
+    OtherPlayers = true,    -- true = cache aussi les autres noms
+    OtherPlayersTemplate = "Player",  -- Autres = "Player1", "Player2"...
+    RenameTextBoxes = true, -- Cache dans les inputs aussi
+    UseMetatableHook = true -- Anti-détection max (besoin executor avancé)
+}
+
+-- Le reste du code (copie-colle tout) :
+local ProtectedNames = {}
+local Counter = 1
+if Config.OtherPlayers then
+    for _, player in pairs(game:GetService("Players"):GetPlayers()) do
+        ProtectedNames[player.Name] = Config.OtherPlayersTemplate .. Counter
+        Counter = Counter + 1
+    end
+    game.Players.PlayerAdded:Connect(function(player)
+        ProtectedNames[player.Name] = Config.OtherPlayersTemplate .. Counter
+        Counter = Counter + 1
+    end)
+end
+
+local LPName = game.Players.LocalPlayer.Name
+
+local function FilterString(S)
+    local RS = S
+    if Config.OtherPlayers then
+        for realName, fakeName in pairs(ProtectedNames) do
+            RS = string.gsub(RS, realName, fakeName)
+        end
+    end
+    return string.gsub(RS, LPName, Config.ProtectedName)
+end
+
+-- Scan initial
+for _, obj in pairs(game:GetDescendants()) do
+    if obj:IsA("TextLabel") or obj:IsA("TextButton") or (Config.RenameTextBoxes and obj:IsA("TextBox")) then
+        obj.Text = FilterString(obj.Text)
+    end
+end
+
+-- Hook pour changements
+game.DescendantAdded:Connect(function(obj)
+    if obj:IsA("TextLabel") or obj:IsA("TextButton") or (Config.RenameTextBoxes and obj:IsA("TextBox")) then
+        obj:GetPropertyChangedSignal("Text"):Connect(function()
+            obj.Text = FilterString(obj.Text)
+        end)
+    end
+end)
+
+-- Metatable hook (anti-filter pro)
+if Config.UseMetatableHook and getrawmetatable then
+    local mt = getrawmetatable(game)
+    local old = mt.__newindex
+    local newindex = function(self, key, value)
+        if (self:IsA("TextLabel") or self:IsA("TextButton") or (Config.RenameTextBoxes and self:IsA("TextBox"))) 
+           and key == "Text" and type(value) == "string" then
+            return old(self, key, FilterString(value))
+        end
+        return old(self, key, value)
+    end
+    mt.__newindex = newindex
+end
+
+print("SUPER Hide Name ACTIVÉ ! Tous noms cachés 👻")
