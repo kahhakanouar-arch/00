@@ -1,65 +1,46 @@
-local Config = {
-    ProtectedName = "Anouar777x",  -- TON NOUVEAU NOM ICI !
-    OtherPlayers = false,          -- false = seulement TON nom changé
-    OtherPlayersTemplate = "Player",
-    RenameTextBoxes = false,       -- Évite bugs GUI
-    UseMetatableHook = true,       -- Active pour anti-reset (désactive si bug executor)
-    UseAggressiveFiltering = false -- Pas de lag
-}
+local Players = game:GetService("Players")
+local player = Players.LocalPlayer
+local NEW_NAME = "Anouar777x"
 
-local ProtectedNames = {}
-local Counter = 1
-if Config.OtherPlayers then
-    for _, player in pairs(game:GetService("Players"):GetPlayers()) do
-        ProtectedNames[player.Name] = Config.OtherPlayersTemplate .. Counter
-        Counter = Counter + 1
+local function updateLabel(textLabel)
+    local oldText = textLabel.Text
+    if string.find(oldText, player.Name) then
+        textLabel.Text = string.gsub(oldText, player.Name, NEW_NAME)
     end
-    game.Players.PlayerAdded:Connect(function(player)
-        ProtectedNames[player.Name] = Config.OtherPlayersTemplate .. Counter
-        Counter = Counter + 1
+end
+
+local function setupGui(gui)
+    for _, descendant in pairs(gui:GetDescendants()) do
+        if descendant:IsA("TextLabel") then
+            updateLabel(descendant)
+        end
+    end
+    gui.DescendantAdded:Connect(function(desc)
+        if desc:IsA("TextLabel") then
+            desc:GetPropertyChangedSignal("Text"):Connect(updateLabel)
+        end
     end)
 end
 
-local LPName = game.Players.LocalPlayer.Name
-local IsA = game.IsA
+local function onHead(child)
+    if child:IsA("BillboardGui") then
+        setupGui(child)
+    end
+end
 
-local function FilterString(S)
-    local RS = S
-    if Config.OtherPlayers then
-        for realName, fakeName in pairs(ProtectedNames) do
-            RS = string.gsub(RS, realName, fakeName)
+local function renameNametag(character)
+    local head = character:WaitForChild("Head", 10)
+    if head then
+        for _, child in pairs(head:GetChildren()) do
+            onHead(child)
         end
-    end
-    return string.gsub(RS, LPName, Config.ProtectedName)
-end
-
--- Scan initial (nametag, leaderboard, chat...)
-for _, obj in pairs(game:GetDescendants()) do
-    if obj:IsA("TextLabel") or obj:IsA("TextButton") then
-        obj.Text = FilterString(obj.Text)
+        head.ChildAdded:Connect(onHead)
     end
 end
 
--- Surveille nouveaux textes
-game.DescendantAdded:Connect(function(obj)
-    if obj:IsA("TextLabel") or obj:IsA("TextButton") then
-        obj:GetPropertyChangedSignal("Text"):Connect(function()
-            obj.Text = FilterString(obj.Text)
-        end)
-    end
-end)
-
--- Hook pro (anti-reset nametag)
-if Config.UseMetatableHook and getrawmetatable then
-    local mt = getrawmetatable(game)
-    local old = mt.__newindex
-    local newindex = function(self, key, value)
-        if (self:IsA("TextLabel") or self:IsA("TextButton")) and key == "Text" and type(value) == "string" then
-            return old(self, key, FilterString(value))
-        end
-        return old(self, key, value)
-    end
-    mt.__newindex = newindex
+if player.Character then
+    renameNametag(player.Character)
 end
+player.CharacterAdded:Connect(renameNametag)
 
-print("ez")
+print("ezzz")
